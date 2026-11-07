@@ -35,6 +35,16 @@ jobs:
         working-directory: WC_Khata
         run: flutter pub get
 
+      - name: Set iOS minimum version to 15.5
+        working-directory: WC_Khata
+        run: |
+          sed -i '' -E 's/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]+;/IPHONEOS_DEPLOYMENT_TARGET = 15.5;/g' ios/Runner.xcodeproj/project.pbxproj
+          flutter build ios --config-only --no-codesign || true
+          if [ -f ios/Podfile ]; then
+            sed -i '' -E "s/^#? ?platform :ios, .*/platform :ios, '15.5'/" ios/Podfile
+            grep -n "platform :ios" ios/Podfile
+          fi
+
       - name: Build iOS
         working-directory: WC_Khata
         run: flutter build ios --release --no-codesign
