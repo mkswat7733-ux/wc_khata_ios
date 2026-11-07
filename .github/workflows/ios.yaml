@@ -7,16 +7,38 @@ on:
 jobs:
   build:
     runs-on: macos-latest
-    defaults:
-      run:
-        working-directory: WC_Khata
     steps:
       - uses: actions/checkout@v4
+
+      - name: Unzip project
+        run: unzip -q WC_Khata.zip
+
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-      - run: flutter pub get
-      - run: flutter build ios --release --no-codesign
+
+      - name: Add iOS permissions
+        working-directory: WC_Khata
+        run: |
+          P=ios/Runner/Info.plist
+          add() {
+            /usr/libexec/PlistBuddy -c "Add :$1 string '$2'" "$P" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :$1 '$2'" "$P"
+          }
+          add NSCameraUsageDescription "Camera is used to scan barcodes and take photos"
+          add NSMicrophoneUsageDescription "Microphone is used for voice recording"
+          add NSPhotoLibraryUsageDescription "Photos are used to pick images"
+          add NSContactsUsageDescription "Contacts are used to add customers and suppliers"
+          add NSFaceIDUsageDescription "Face ID is used to unlock the app"
+
+      - name: Get packages
+        working-directory: WC_Khata
+        run: flutter pub get
+
+      - name: Build iOS
+        working-directory: WC_Khata
+        run: flutter build ios --release --no-codesign
+
       - uses: actions/upload-artifact@v4
         with:
           name: ios-build
